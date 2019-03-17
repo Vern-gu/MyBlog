@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from .models import Article, Category
 from app_comment.forms import CommentForm
 from django.views.generic import ListView
+from django.db.models import Q
 
 
 # Create your views here.
@@ -10,7 +11,7 @@ class IndexView(ListView):
     template_name = 'blog/blog_list.html'
     context_object_name = 'articles'
     # 指定 paginate_by 属性后开启分页功能，其值代表每一页包含多少篇文章
-    paginate_by = 1
+    paginate_by = 10
 
     def get_queryset(self):
         return super(IndexView, self).get_queryset().filter(isDelete=False)
@@ -58,6 +59,18 @@ def category(request, pk):
                                           category=cate)
     context = {'articles': article_list}
     return render(request, 'blog/blog_list.html', context)
+
+
+def search(request):
+    q = request.GET.get('q')
+    error_msg = ''
+
+    if not q:
+        error_msg = '请输入关键词'
+        return render(request, 'blog/blog_list.html', {'error_msg': error_msg})
+
+    article_list = Article.objects.filter(Q(title__icontains=q) | Q(text__icontains=q)).filter(isDelete=False)
+    return render(request, 'blog/blog_list.html', {'error_msg': error_msg, 'articles': article_list})
 
 
 def contact(request):
